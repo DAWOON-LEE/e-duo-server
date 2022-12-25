@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -91,8 +92,12 @@ public class AuthController {
 
     @PostMapping("/auth/email")
     public ResponseEntity<?> emailValidCheck(@Value("${spring.mail.username}") String from, @RequestBody String userId)
-            throws SQLException, MessagingException, DuplicateKeyException {
+            throws IllegalArgumentException, SQLException, MessagingException, DuplicateKeyException {
         logger.info("Our Domain : {} to User : {}", from, userId);
+
+        if (!isValidEmail(userId)) {
+            throw new IllegalArgumentException("이메일 형식이 올바르지 않습니다.");
+        }
 
         if (!authService.isExistsUserId(userId)) {
             String emailAuthCode = NumberGenerator.generateRandomUniqueNumber(6);
@@ -112,7 +117,7 @@ public class AuthController {
 
     @PostMapping("/auth/signup")
     public ResponseEntity<?> signup(@RequestBody Map<String, Object> params)
-            throws SQLException, DuplicateKeyException, IllegalArgumentException, UsernameNotFoundException {
+            throws SQLException, IllegalArgumentException, UsernameNotFoundException {
         JwtResponse result = authService.registerUser(params);
         logger.info("result to register user: {}", result);
         return ResponseEntity.ok(result);
@@ -170,6 +175,13 @@ public class AuthController {
         }
 
         return new ResponseEntity<>(jwtResponse, HttpStatus.OK);
+    }
+
+    private boolean isValidEmail(String userId) {
+        String emailRegex = "^[_a-z0-9-]+(.[_a-z0-9-]+)*@(?:\\w+\\.)+\\w+$";
+        return Pattern.compile(emailRegex)
+                      .matcher(userId)
+                      .matches();
     }
 
 }

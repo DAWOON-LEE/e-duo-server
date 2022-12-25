@@ -101,15 +101,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public JwtResponse registerUser(Map<String, Object> params)
-            throws SQLException, DuplicateKeyException, IllegalArgumentException, UsernameNotFoundException {
-        // 1. userId@domain 으로 아이디 중복 검사
-        String userId = (String) params.get("userId");
-//        if (userMapper.existsByUserId(userId)) {
-//            throw new DuplicateMemberException("이미 가입된 회원입니다.");
-//        }
-
-        // 2. ObjectMapper -> 맞는 VO로 변환 후 user 테이블과 role에 맞는 테이블에 정보 입력
+            throws SQLException, IllegalArgumentException, UsernameNotFoundException {
         insertMultiUserInfo(params);
+        
+        String userId = (String) params.get("userId");
         User user = userMapper.selectUserByUserId(userId)
                               .orElseThrow(() -> new UsernameNotFoundException("회원 가입에 실패했습니다."));
 
@@ -216,7 +211,6 @@ public class AuthServiceImpl implements AuthService {
             teacher.encryptPassword(passwordEncoder);
             userMapper.insertUser(teacher);
             userMapper.insertTeacher(teacher);
-            return;
         } else if (roleType.equals("ROLE_ASSISTANT")) {
             Assistant assistant = objectMapper.convertValue(params, Assistant.class);
             logger.info("Assistant : {}\tuserId : {}", assistant, assistant.getUserId());
@@ -230,7 +224,6 @@ public class AuthServiceImpl implements AuthService {
                             .teacherUserId(assistant.getTeacherUserId())
                             .build()
             );
-            return;
         } else if (roleType.equals("ROLE_STUDENT")) {
             Student student = objectMapper.convertValue(params, Student.class);
             logger.info("Student : {}\tuserId : {}", student, student.getUserId());

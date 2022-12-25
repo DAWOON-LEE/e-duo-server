@@ -18,7 +18,7 @@ public interface AuthService {
     Object getUserInfoUsingKakao(String accessTokenByKakao) throws SQLException, JsonProcessingException;
 
     JwtResponse registerUser(Map<String, Object> params)
-            throws SQLException, DuplicateKeyException, IllegalArgumentException, UsernameNotFoundException;
+            throws SQLException, IllegalArgumentException, UsernameNotFoundException;
 
     boolean isExistsUserId(String userId) throws SQLException;
 
