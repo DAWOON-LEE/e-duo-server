@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.educator.eduo.attendance.model.mapper.AttendanceMapper">
+
+	<resultMap id="AttendanceResult" type="com.educator.eduo.attendance.model.dto.AttendanceResultDto">
+		<id property="attendanceId" column="attendance_id" />
+		<result property="lectureId" column="lecture_id"/>
+		<result property="studentId" column="user_id"/>
+		<result property="schoolName" column="school_name" />
+		<result property="checkIn" column="check_in"/>
+		<result property="studentName" column="name"/>
+		<result property="assignment" column="assignment"/>
+		<result property="doneDate" column="done_date"/>
+		<result property="testScore" column="test_score"/>
+		<result property="lectureDate" column="lecture_date"/>
+		<result property="parentPhone" column="parent_phone"/>
+	</resultMap>
+
+	<select id="selectAttendanceList" resultMap="AttendanceResult">
+		SELECT a.attendance_id as attendance_id, s.school_name as school_name, s.user_id as user_id,
+		a.check_in as check_in, u.name as name, a.lecture_id as lecture_id, a.assignment as assignment, a.done_date as done_date, a.test_score as test_score, s.parent_phone as parent_phone
+		FROM attendance a
+		inner join student s
+		on a.user_id = s.user_id
+		inner join user u
+		on u.user_id = s.user_id
+		where a.lecture_id = #{lectureId};
+	</select>
+	
+	<select id="selectSugangAttendance" parameterType="SugangRequestDto" resultMap="AttendanceResult">
+		SELECT a.attendance_id as attendance_id, s.school_name as school_name, s.user_id as user_id,
+		a.check_in as check_in, u.name as name, a.lecture_id as lecture_id, a.assignment as assignment, a.done_date as done_date, a.test_score as test_score, l.lecture_date as lecture_date
+		FROM attendance a
+		inner join student s
+		on a.user_id = s.user_id
+		inner join user u
+		on u.user_id = s.user_id
+		inner join lecture l
+		on a.lecture_id = l.lecture_id
+		where a.user_id = #{userId} and a.lecture_id in (
+			SELECT *
+			FROM lecture
+			where course_id = #{courseId}
+		);
+	</select>
+	
+	<update id="updateAttendance" parameterType="java.util.List">
+		<foreach collection="list" item="item" separator=",">
+			UPDATE attendance
+			SET check_in = #{item.checkIn}
+			WHERE lecture_id = #{item.lectureId} and user_id = #{item.studentId};
+		</foreach>
+	</update>
+	
+	<update id="registerAssignment" parameterType="java.util.List">
+		UPDATE attendance
+		SET assignment = 1
+		WHERE lecture_id = #{lectureId};
+	</update>
+	
+	<update id="updateAssignment" parameterType="Attendance">
+		<foreach collection="list" item="item" separator=",">
+			UPDATE attendance
+			<if test="assignment == 2">
+				SET assignment = #{item.assignment}, done_date = sysdate()
+			</if>
+			<if test="assignment == 1">
+				SET assignment = #{item.assignment}, done_date = null
+			</if>
+			WHERE lecture_id = #{item.lectureId} and user_id = #{item.studentId};
+		</foreach>
+	</update>
+	
+	<update id="updateTestScore" parameterType="Attendance">
+		UPDATE attendance
+		SET test_score = #{testScore}
+		WHERE lecture_id = #{lectureId} and user_id = #{studentId};
+	</update>
+	
+	<insert id="insertAttendanceList" parameterType="java.util.List">
+		INSERT INTO attendance(user_id, lecture_id, assignment)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId}, #{item.lectureId}, #{item.assignment})
+		</foreach>
+	</insert>
+	
+	<delete id="deleteAttendanceList" parameterType="java.util.List">
+		DELETE FROM attendance
+		WHERE
+		<foreach collection="list" item="item" separator="OR">
+			(user_id = #{item.userId} and lecture_id = #{item.lectureId})
+		</foreach>
+	</delete>
+	
+	<delete id="deleteAttendance" parameterType="string">
+		DELETE FROM attendance
+		WHERE lecture_id = #{lectureId};
+	</delete>
+</mapper>

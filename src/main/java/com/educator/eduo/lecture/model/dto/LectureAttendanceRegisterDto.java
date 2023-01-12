@@ -9,15 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LectureResultDto {
+public class LectureAttendanceRegisterDto {
 	private String lectureId;
-	private String courseId;
-	private String lectureName;
-	private String lectureDate;
-	private String startTime;
-	private String endTime;
-	private String description;
+	private String userId;
 	private boolean existAssignment;
-	private boolean existTest;
-	private String testType;
 }
